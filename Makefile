@@ -1,11 +1,11 @@
-VERSION := $(shell git describe --tags)
+VERSION := $(git describe --tags)
 
 linux:
-	GOOS=darwin GOARCH=386 go build -o ./target/refreturn -ldflags="-X main.version=${VERSION}" ./*.go
+	go build -o ./target/refreturn -ldflags="-X main.version=${VERSION}" ./main.go
 mac:
-	GOOS=darwin GOARCH=amd64 go build -o ./target/refreturn -ldflags="-X main.version=${VERSION}" ./*.go
+	go build -o ./target/refreturn -ldflags="-X main.version=${VERSION}" ./main.go
 windows:
-	GOOS=windows GOARCH=386 go build -o ./target/refreturn.exe -ldflags="-X main.version=${VERSION}" ./*.go
+	go build -o ./target/refreturn.exe -ldflags="-X main.version=${VERSION}" ./main.go
 clean:
 	rm -rf ./target
 all: linux mac windows
