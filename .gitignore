@@ -1,0 +1,5 @@
+/vendor
+/ignore
+/target
+/bin
+*.exe
