@@ -6,10 +6,11 @@ import (
 	"go/parser"
 	"go/token"
 	"strings"
+	"sync"
 )
 
 type Worker interface {
-	RecvTask(<-chan string, chan<- bool)
+	RecvTask(<-chan string, *sync.WaitGroup)
 	process(string) error
 }
 
@@ -20,16 +21,15 @@ func NewWorker() Worker {
 
 type worker struct{}
 
-func (w *worker) RecvTask(jobs <-chan string, done chan<- bool) {
+func (w *worker) RecvTask(jobs <-chan string, gate *sync.WaitGroup) {
 	for {
 		path, ok := <-jobs
-
 		if !ok {
 			break
 		}
 		w.process(path)
 	}
-	done <- true
+	gate.Done()
 }
 
 func (w *worker) process(path string) error {
@@ -47,13 +47,11 @@ func (w *worker) process(path string) error {
 
 	for {
 		i, ok := <-idents
-
 		if !ok {
 			break
 		}
 		fmt.Printf("%s returns one or more references.\n", i.Name)
 	}
-
 	return nil
 }
 

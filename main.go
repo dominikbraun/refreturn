@@ -5,28 +5,28 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
+	"sync"
 )
 
 const numWorkers int = 10
 
 var (
 	jobQueue = make(chan string, 100)
-	done     = make(chan bool)
+	gate     = sync.WaitGroup{}
 )
 
 func main() {
 	for i := 0; i < numWorkers; i++ {
-		go NewWorker().RecvTask(jobQueue, done)
+		gate.Add(1)
+		go NewWorker().RecvTask(jobQueue, &gate)
 	}
 
 	if err := filepath.Walk(".", handler); err != nil {
 		log.Fatal(err)
 	}
-	close(jobQueue)
 
-	for i := 0; i < numWorkers; i++ {
-		<-done
-	}
+	close(jobQueue)
+	gate.Wait()
 }
 
 func handler(path string, file os.FileInfo, err error) error {
