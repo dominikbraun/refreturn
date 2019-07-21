@@ -1,7 +1,6 @@
 package main
 
 import (
-	"fmt"
 	"log"
 	"os"
 	"path/filepath"
@@ -9,8 +8,6 @@ import (
 )
 
 func main() {
-	fmt.Printf("%s\n", "starting refreturn")
-
 	if err := filepath.Walk(".", handler); err != nil {
 		log.Fatal(err)
 	}

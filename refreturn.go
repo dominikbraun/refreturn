@@ -13,28 +13,53 @@ func processFile(path string) error {
 
 	f, err := parser.ParseFile(fset, path, nil, parser.AllErrors)
 	if err != nil {
-		fmt.Println(err)
 		return nil
 	}
 
-	ast.Walk(visitor{}, f)
+	ast.Walk(vtor{}, f)
 
 	return nil
 }
 
-type visitor struct {
-	depth int
-}
+type vtor struct{}
 
-func (v visitor) Visit(n ast.Node) ast.Visitor {
+func (v vtor) Visit(n ast.Node) ast.Visitor {
 	if n == nil {
-		v.depth = 0
 		return nil
 	}
 
-	tabs := strings.Repeat("\t", v.depth)
-	fmt.Printf("%s%T\n", tabs, n)
+	switch d := n.(type) {
+	case *ast.FuncDecl:
+		fields := d.Type.Results
 
-	v.depth++
+		if v.hasRefs(fields) {
+			fmt.Printf("%v returns one or more references.\n", d.Name)
+		}
+	}
 	return v
+}
+
+func (vtor) hasRefs(fields *ast.FieldList) bool {
+	if fields == nil {
+		return false
+	}
+	for _, f := range fields.List {
+		if _, ok := f.Type.(*ast.StarExpr); ok {
+			return true
+		}
+	}
+	return false
+}
+
+func f1() (r *strings.Reader) {
+	r = strings.NewReader("")
+	return
+}
+
+func f2() *strings.Reader {
+	return strings.NewReader("")
+}
+
+func f3() (int, int) {
+	return 0, 0
 }
