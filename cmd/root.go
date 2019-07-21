@@ -10,10 +10,13 @@ import (
 )
 
 var rootCmd = &cobra.Command{
-	Use:   "refreturn",
+	Use:   "refreturn <directory>",
 	Short: `Find functions that return a reference and cause allocations.`,
+	Long: `refreturn finds all Go functions in a directory tree that return a reference
+and cause a potential unnecessary heap allocation.`,
+	Args: cobra.MinimumNArgs(1),
 	Run: func(cmd *cobra.Command, args []string) {
-		core.Run(".")
+		core.Run(args[0])
 	},
 }
 

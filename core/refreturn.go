@@ -22,7 +22,7 @@ var (
 func Run(dir string) {
 	for i := 0; i < numWorkers; i++ {
 		gate.Add(1)
-		go NewWorker().RecvTask(jobQueue, &gate)
+		go (&worker{}).RecvTask(jobQueue, &gate)
 	}
 
 	if err := filepath.Walk(dir, handler); err != nil {
@@ -37,22 +37,10 @@ func handler(path string, file os.FileInfo, err error) error {
 	if err != nil {
 		return err
 	}
-
 	if strings.HasSuffix(path, ".go") {
 		jobQueue <- path
 	}
-
 	return nil
-}
-
-type Worker interface {
-	RecvTask(<-chan string, *sync.WaitGroup)
-	process(string) error
-}
-
-func NewWorker() Worker {
-	w := worker{}
-	return &w
 }
 
 type worker struct{}
@@ -91,7 +79,6 @@ func (w *worker) process(path string) error {
 		}
 		fmt.Printf("%s returns one or more references.\n", i.Name)
 	}
-
 	return nil
 }
 
@@ -125,17 +112,4 @@ func (vtor) checkRefs(fields *ast.FieldList) bool {
 		}
 	}
 	return false
-}
-
-func f1() (r *strings.Reader) {
-	r = strings.NewReader("")
-	return
-}
-
-func f2() *strings.Reader {
-	return strings.NewReader("")
-}
-
-func f3() (int, int) {
-	return 0, 0
 }
