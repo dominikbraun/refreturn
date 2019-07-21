@@ -5,21 +5,25 @@ import (
 	"log"
 	"os"
 	"path/filepath"
+	"strings"
 )
 
 func main() {
 	fmt.Printf("%s\n", "starting refreturn")
 
-	if err := filepath.Walk(".", fileHandler); err != nil {
+	if err := filepath.Walk(".", handler); err != nil {
 		log.Fatal(err)
 	}
 }
 
-func fileHandler(path string, file os.FileInfo, err error) error {
+func handler(path string, file os.FileInfo, err error) error {
 	if err != nil {
 		return err
 	}
-	_ = readFile(path)
+
+	if strings.HasSuffix(path, ".go") {
+		_ = processFile(path)
+	}
 
 	return nil
 }
