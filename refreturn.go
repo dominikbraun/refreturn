@@ -43,7 +43,10 @@ func (w *worker) process(path string) error {
 	idents := make(chan *ast.Ident)
 	v := vtor{idents}
 
-	go ast.Walk(v, file)
+	go func() {
+		ast.Walk(v, file)
+		close(v.idents)
+	}()
 
 	for {
 		i, ok := <-idents
@@ -52,6 +55,7 @@ func (w *worker) process(path string) error {
 		}
 		fmt.Printf("%s returns one or more references.\n", i.Name)
 	}
+
 	return nil
 }
 
@@ -67,9 +71,8 @@ func (v vtor) Visit(n ast.Node) ast.Visitor {
 	switch decl := n.(type) {
 	case *ast.FuncDecl:
 		fields := decl.Type.Results
-		hasRefs := v.checkRefs(fields)
 
-		if hasRefs {
+		if v.checkRefs(fields) {
 			v.idents <- decl.Name
 		}
 	}
