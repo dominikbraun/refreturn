@@ -9,6 +9,8 @@ import (
 	"github.com/spf13/cobra"
 )
 
+// rootCmd depicts the main command for refreturn. At the
+// moment, there are no subcommands added to it.
 var rootCmd = &cobra.Command{
 	Use:   "refreturn <directory>",
 	Short: `Find functions that return a reference and cause allocations.`,
@@ -20,6 +22,8 @@ and cause a potential unnecessary heap allocation.`,
 	},
 }
 
+// Execute runs the root command instance which will then
+// trigger the execution of the actual logic.
 func Execute() {
 	if err := rootCmd.Execute(); err != nil {
 		fmt.Println(err)
