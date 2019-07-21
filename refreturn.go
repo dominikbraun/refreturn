@@ -8,38 +8,72 @@ import (
 	"strings"
 )
 
-func processFile(path string) error {
+type Worker interface {
+	RecvTask(<-chan string, chan<- bool)
+	process(string) error
+}
+
+func NewWorker() Worker {
+	w := worker{}
+	return &w
+}
+
+type worker struct{}
+
+func (w *worker) RecvTask(jobs <-chan string, done chan<- bool) {
+	for {
+		path, ok := <-jobs
+
+		if !ok {
+			break
+		}
+		w.process(path)
+	}
+	done <- true
+}
+
+func (w *worker) process(path string) error {
 	fset := token.NewFileSet()
 
-	f, err := parser.ParseFile(fset, path, nil, parser.AllErrors)
+	file, err := parser.ParseFile(fset, path, nil, parser.AllErrors)
 	if err != nil {
 		return nil
 	}
 
-	ast.Walk(vtor{}, f)
+	idents := make(chan *ast.Ident)
+
+	v := vtor{idents}
+	ast.Walk(v, file)
+
+	for i := range idents {
+		fmt.Println(i.Name)
+	}
 
 	return nil
 }
 
-type vtor struct{}
+type vtor struct {
+	idents chan<- *ast.Ident
+}
 
 func (v vtor) Visit(n ast.Node) ast.Visitor {
 	if n == nil {
 		return nil
 	}
 
-	switch d := n.(type) {
+	switch decl := n.(type) {
 	case *ast.FuncDecl:
-		fields := d.Type.Results
+		fields := decl.Type.Results
+		hasRefs := v.checkRefs(fields)
 
-		if v.hasRefs(fields) {
-			fmt.Printf("%v returns one or more references.\n", d.Name)
+		if hasRefs {
+			v.idents <- decl.Name
 		}
 	}
 	return v
 }
 
-func (vtor) hasRefs(fields *ast.FieldList) bool {
+func (vtor) checkRefs(fields *ast.FieldList) bool {
 	if fields == nil {
 		return false
 	}
