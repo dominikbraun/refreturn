@@ -22,6 +22,7 @@ func main() {
 	if err := filepath.Walk(".", handler); err != nil {
 		log.Fatal(err)
 	}
+	close(jobQueue)
 
 	for i := 0; i < numWorkers; i++ {
 		<-done

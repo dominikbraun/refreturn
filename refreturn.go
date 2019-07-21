@@ -41,12 +41,17 @@ func (w *worker) process(path string) error {
 	}
 
 	idents := make(chan *ast.Ident)
-
 	v := vtor{idents}
-	ast.Walk(v, file)
 
-	for i := range idents {
-		fmt.Println(i.Name)
+	go ast.Walk(v, file)
+
+	for {
+		i, ok := <-idents
+
+		if !ok {
+			break
+		}
+		fmt.Printf("%s returns one or more references.\n", i.Name)
 	}
 
 	return nil
