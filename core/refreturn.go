@@ -72,7 +72,7 @@ func (w *worker) process(path string) error {
 		return nil
 	}
 
-	idents := make(chan *ast.Ident)
+	idents := make(chan match)
 	v := vtor{idents}
 
 	go func() {
@@ -81,11 +81,14 @@ func (w *worker) process(path string) error {
 	}()
 
 	for {
-		i, ok := <-idents
+		match, ok := <-idents
 		if !ok {
 			break
 		}
-		fmt.Printf("%s returns one or more references.\n", i.Name)
+		pos := fset.PositionFor(match.pos, false)
+		fn := match.idt.Name
+
+		fmt.Printf("%s: %s\n", pos, fn)
 	}
 	return nil
 }
@@ -93,7 +96,15 @@ func (w *worker) process(path string) error {
 // vtor satisfies the ast.Visitor interface and is used by for
 // inspecting every AST node in ast.Walk().
 type vtor struct {
-	idents chan<- *ast.Ident
+	idents chan<- match
+}
+
+// match represents a match, i. e. a reference-returning func.
+// pos describes the function's position in the source file, while
+// idt holds the actual name.
+type match struct {
+	pos token.Pos
+	idt *ast.Ident
 }
 
 // Visit checks the type a given AST node `n`. If the node is a
@@ -108,7 +119,7 @@ func (v vtor) Visit(n ast.Node) ast.Visitor {
 		fields := decl.Type.Results
 
 		if v.checkRefs(fields) {
-			v.idents <- decl.Name
+			v.idents <- match{decl.Pos(), decl.Name}
 		}
 	}
 	return v
