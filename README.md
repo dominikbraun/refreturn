@@ -5,6 +5,8 @@ When a function allocates a value and returns a reference to it, the value has t
 
 **This may be optimized: You can avoid the heap allocation and allow the function to be inlined.**
 
+---
+
 ### Example: a simple constructor
 
 ```go
