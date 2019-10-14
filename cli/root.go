@@ -12,8 +12,9 @@ import (
 // rootCmd depicts the main command for refreturn. At the
 // moment, there are no subcommands added to it.
 var rootCmd = &cobra.Command{
-	Use:   "refreturn <directory>",
-	Short: `Find functions that return a reference and cause allocations.`,
+	Use:     "refreturn <directory>",
+	Version: "0.1.0",
+	Short:   `Find functions that return a reference and cause allocations.`,
 	Long: `refreturn finds all Go functions in a directory tree that return a reference
 and cause a potential unnecessary heap allocation.`,
 	Args: cobra.MinimumNArgs(1),
