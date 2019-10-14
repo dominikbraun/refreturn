@@ -22,6 +22,7 @@ func New() *Coffee {
 }
 ```
 
+0. [Download refreturn](https://github.com/dominikbraun/refreturn/releases) and copy the binary into your project's root for example.
 1. Run `./refreturn <directory>` and you'll see that `New` returns a reference.
 2. Check if the returned value is being created in the function.
 3. This is true for our `c` variable.
