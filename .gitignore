@@ -1,5 +1,22 @@
-/vendor
-/ignore
-/target
-/bin
+# Binaries for programs and plugins
 *.exe
+*.exe~
+*.dll
+*.so
+*.dylib
+
+# Test binary, built with `go test -c`
+*.test
+
+# Dependency directories
+# vendor/
+
+# IDE files
+.idea
+.vscode
+
+# refreturn binary
+refreturn
+refreturn.exe
+cmd/*/__debug_bin
+.target/*

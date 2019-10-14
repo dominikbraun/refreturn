@@ -1,4 +1,4 @@
-package cmd
+package cli
 
 import (
 	"fmt"
@@ -18,7 +18,9 @@ var rootCmd = &cobra.Command{
 and cause a potential unnecessary heap allocation.`,
 	Args: cobra.MinimumNArgs(1),
 	Run: func(cmd *cobra.Command, args []string) {
+		fmt.Println("Listing all functions that return a reference:")
 		core.Run(args[0])
+		fmt.Println("Finished.")
 	},
 }
 
