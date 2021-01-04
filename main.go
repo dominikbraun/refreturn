@@ -1,9 +1,13 @@
 package main
 
 import (
-	"github.com/dominikbraun/refreturn/cli"
+	"log"
 )
 
+var version = "UNDEFINED"
+
 func main() {
-	cli.Execute()
+	if err := rootCommand(version).Execute(); err != nil {
+		log.Fatal(err)
+	}
 }
