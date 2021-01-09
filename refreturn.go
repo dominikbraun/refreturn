@@ -16,8 +16,12 @@ const (
 	fileExtension string = ".go"
 )
 
-// Run spawns all workers and walking through the specified
-// directory. Waits until all files have been processed.
+// Run executes refreturn. It is in charge of spawning all worker
+// routines, sending the files to be processed through a channel
+// and gracefully stopping all workers.
+//
+// At the moment, the results are not queued but printed directly
+// by the workers instead. This may change in the future.
 func Run(dir string) error {
 	var wg sync.WaitGroup
 	jobQueue := make(chan string)
@@ -41,6 +45,8 @@ func Run(dir string) error {
 	return nil
 }
 
+// sendFiles sends all files matching the configured file extension
+// through the jobQueue channel.
 func sendFiles(dir string, jobQueue chan<- string) error {
 	return filepath.Walk(dir, func(path string, _ os.FileInfo, err error) error {
 		if err != nil {
@@ -55,8 +61,8 @@ func sendFiles(dir string, jobQueue chan<- string) error {
 
 type Worker struct{}
 
-// readFromQueue pops tasks off the global job queue and processes
-// each job. Stops when no more jobs are in the queue.
+// readFromQueue pops off items from the job queue sequentially.
+// Each queue item will be passed to findAllocationsInFile.
 func (w *Worker) readFromQueue(jobs <-chan string, wg *sync.WaitGroup) error {
 	for path := range jobs {
 		if err := w.findAllocationsInFile(path); err != nil {
@@ -68,8 +74,10 @@ func (w *Worker) readFromQueue(jobs <-chan string, wg *sync.WaitGroup) error {
 	return nil
 }
 
-// findAllocationsInFile parses a source file and walks through its AST in a
-// seperate goroutine, receiving the affected matches from it.
+// findAllocationsInFile parses a source code file and walks through
+// its syntax tree. In doing so, a custom node visitor will check if
+// a node is a function that returns a pointer. All matching nodes
+// will be sent to a dedicated channel.
 func (w *Worker) findAllocationsInFile(path string) error {
 	fileSet := token.NewFileSet()
 
@@ -87,6 +95,8 @@ func (w *Worker) findAllocationsInFile(path string) error {
 		close(visitor.matches)
 	}()
 
+	// Iterate over all matches and print the file information for
+	// each match. This should be outsourced to an own component.
 	for match := range visitor.matches {
 		pos := fileSet.PositionFor(match.Position, false)
 		fn := match.Identifier.Name
@@ -98,15 +108,13 @@ func (w *Worker) findAllocationsInFile(path string) error {
 }
 
 // Visitor satisfies the ast.Visitor interface and is used by for
-// inspecting every AST node in ast.Walk().
+// inspecting every AST node using ast.Walk().
 type Visitor struct {
 	matches chan Node
 	filter  func(node ast.Node) bool
 }
 
-// Node represents a Node, i. e. a reference-returning func.
-// Position describes the function's Position in the source file, while
-// Identifier holds the actual name.
+// Node represents an AST node with an identifier.
 type Node struct {
 	Position   token.Pos
 	Identifier *ast.Ident
@@ -132,7 +140,7 @@ func (v Visitor) Visit(node ast.Node) ast.Visitor {
 }
 
 // containsReference determines if one of a function's return types
-// is a reference. Each return type is an entry in `fields`.
+// is a reference. Each return type is an entry in the FieldList.
 func containsReference(fieldList *ast.FieldList) bool {
 	if fieldList == nil {
 		return false
